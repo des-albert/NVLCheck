@@ -1,5 +1,5 @@
 .root {
-    -fx-background-color: rgba(187, 193, 136, 0.43);
+    -fx-background-color: rgba(174, 154, 119, 0.68);
 }
 
 .button{
@@ -9,3 +9,4 @@
     -fx-text-alignment: "center";
     -fx-background-color: "MediumSeaGreen"
 }
+

@@ -82,7 +82,7 @@ class NVLCheck {
         val targetValuePairs = mutableListOf<ValuePair>()
 
         val configFirstRow = 3
-        val configLastRow = 41
+        val configLastRow = 42
         var qtyValue: String? = null
         var skuValue: String?
 
@@ -117,7 +117,7 @@ class NVLCheck {
         logger.info("Data read from config file")
 
         val targetFirstRow = 6
-        val targetLastRow = 41
+        val targetLastRow = 43
         try {
             FileInputStream(targetFile).use { fis ->
                 XSSFWorkbook(fis).use { workbook ->
