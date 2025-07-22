@@ -20,21 +20,33 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 
-data class ValuePair(val quantity: String?, val sku: String?)
+data class ValueList(val item: String?, val quantity: String?, val sku: String?)
 
 class NVLCheck {
 
+    @FXML
     lateinit var buttonQuit: Button
-    lateinit var tableDiff: TableView<ValuePair>
+    @FXML
+    lateinit var tableDiff: TableView<ValueList>
+    @FXML
     lateinit var labelResult: Label
+    @FXML
     lateinit var labelTargetFile: Label
+    @FXML
     lateinit var buttonTarget: Button
+    @FXML
     lateinit var buttonCompare: Button
+    @FXML
     lateinit var labelSourceFile: Label
+    @FXML
     lateinit var buttonSource: Button
+    @FXML
     lateinit var labelJavaFX: Label
+    @FXML
     lateinit var labelJDK: Label
+    @FXML
     lateinit var sourceFile: File
+    @FXML
     lateinit var targetFile: File
     val logger: Logger = LoggerFactory.getLogger("Excel Reader")
 
@@ -77,12 +89,11 @@ class NVLCheck {
 
     @FXML
     fun handleCompare() {
-
-        val configValuePairs = mutableListOf<ValuePair>()
-        val targetValuePairs = mutableListOf<ValuePair>()
-
+        val configValueList = mutableListOf<ValueList>()
+        val targetValueList = mutableListOf<ValueList>()
         val configFirstRow = 3
         val configLastRow = 42
+        var itemValue: String?
         var qtyValue: String? = null
         var skuValue: String?
 
@@ -96,6 +107,10 @@ class NVLCheck {
                         val row = sheet.getRow(i)
                         if (row == null)
                             continue
+                        val itemCell: XSSFCell? = row.getCell(5)
+                        evaluator.evaluateInCell(itemCell)
+                        itemValue = itemCell?.stringCellValue
+
                         val qtyCell: XSSFCell? = row.getCell(6)
                         evaluator.evaluateInCell(qtyCell)
                         if (qtyCell?.cellType == CellType.NUMERIC) {
@@ -106,7 +121,8 @@ class NVLCheck {
                         val skuCell: XSSFCell? = row.getCell(7)
                         evaluator.evaluateInCell(skuCell)
                         skuValue = skuCell?.stringCellValue
-                        configValuePairs.add(ValuePair(qtyValue, skuValue))
+
+                        configValueList.add(ValueList(itemValue, qtyValue, skuValue))
                     }
                 }
             }
@@ -127,6 +143,9 @@ class NVLCheck {
                         val row = sheet.getRow(i)
                         if (row == null)
                             continue
+                        val itemCell: XSSFCell? = row.getCell(0)
+                        itemValue = itemCell?.stringCellValue
+
                         val qtyCell: XSSFCell?  = row.getCell(1)
                         if (qtyCell == null)
                             continue
@@ -135,9 +154,10 @@ class NVLCheck {
                         } else if (qtyCell.cellType == CellType.STRING || qtyCell.cellType == CellType.BLANK) {
                             continue
                         }
+
                         val skuCell: XSSFCell?  = row.getCell(2)
                         skuValue = skuCell?.stringCellValue
-                        targetValuePairs.add(ValuePair(qtyValue, skuValue))
+                        targetValueList.add(ValueList(itemValue, qtyValue, skuValue))
                     }
                     fis.close()
                 }
@@ -149,15 +169,15 @@ class NVLCheck {
 
         logger.info("Data read from target file")
 
-        val configSet = configValuePairs.toSet()
-        val targetSet = targetValuePairs.toSet()
+        val configSet = configValueList.toSet()
+        val targetSet = targetValueList.toSet()
 
-        val allPairsMatch = configSet == targetSet
+        val allValuesMatch = configSet == targetSet
 
         tableDiff.items.clear()
 
 
-        if (allPairsMatch) {
+        if (allValuesMatch) {
             labelResult.text = "All items match"
         } else {
             labelResult.text = "Files do not match"
@@ -179,11 +199,14 @@ class NVLCheck {
 
         logger.info("Start application")
 
-        val quantityCol = TableColumn<ValuePair, String>("Quantity")
-        quantityCol.cellValueFactory = PropertyValueFactory<ValuePair, String>("quantity")
+        val itemCol = TableColumn<ValueList, String>("Item")
+        itemCol.cellValueFactory = PropertyValueFactory<ValueList, String>("item")
 
-        val skuCol = TableColumn<ValuePair, String>("SKU")
-        skuCol.cellValueFactory = PropertyValueFactory<ValuePair, String>("sku")
+        val quantityCol = TableColumn<ValueList, String>("Quantity")
+        quantityCol.cellValueFactory = PropertyValueFactory<ValueList, String>("quantity")
+
+        val skuCol = TableColumn<ValueList, String>("SKU")
+        skuCol.cellValueFactory = PropertyValueFactory<ValueList, String>("sku")
 
         tableDiff.isVisible = false
         tableDiff.columns.setAll(quantityCol, skuCol)
