@@ -1,6 +1,7 @@
 package com.dba.nvlcheck
 
 import javafx.application.Platform
+import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -23,6 +24,13 @@ import java.io.IOException
 data class ValueList(val item: String?, val quantity: String?, val sku: String?)
 
 class NVLCheck {
+
+    @FXML
+    lateinit var skuCol: TableColumn<ValueList, String>
+    @FXML
+    lateinit var quantityCol: TableColumn<ValueList, String>
+    @FXML
+    lateinit var itemCol: TableColumn<ValueList, String>
 
     @FXML
     lateinit var buttonQuit: Button
@@ -109,7 +117,12 @@ class NVLCheck {
                             continue
                         val itemCell: XSSFCell? = row.getCell(5)
                         evaluator.evaluateInCell(itemCell)
-                        itemValue = itemCell?.stringCellValue
+                        if (itemCell == null || itemCell.cellType == CellType.BLANK)
+                            continue
+
+                        itemValue = itemCell.stringCellValue
+                        if (itemValue.isNullOrBlank())
+                            continue
 
                         val qtyCell: XSSFCell? = row.getCell(6)
                         evaluator.evaluateInCell(qtyCell)
@@ -144,7 +157,9 @@ class NVLCheck {
                         if (row == null)
                             continue
                         val itemCell: XSSFCell? = row.getCell(0)
-                        itemValue = itemCell?.stringCellValue
+                        if (itemCell == null || itemCell.cellType == CellType.BLANK)
+                            continue
+                        itemValue = itemCell.stringCellValue
 
                         val qtyCell: XSSFCell?  = row.getCell(1)
                         if (qtyCell == null)
@@ -182,7 +197,7 @@ class NVLCheck {
         } else {
             labelResult.text = "Files do not match"
             val diffSet = configSet - targetSet
-            tableDiff.items.addAll(diffSet)
+            tableDiff.items = FXCollections.observableArrayList(diffSet)
             tableDiff.isVisible = true
         }
 
@@ -199,17 +214,12 @@ class NVLCheck {
 
         logger.info("Start application")
 
-        val itemCol = TableColumn<ValueList, String>("Item")
-        itemCol.cellValueFactory = PropertyValueFactory<ValueList, String>("item")
-
-        val quantityCol = TableColumn<ValueList, String>("Quantity")
-        quantityCol.cellValueFactory = PropertyValueFactory<ValueList, String>("quantity")
-
-        val skuCol = TableColumn<ValueList, String>("SKU")
-        skuCol.cellValueFactory = PropertyValueFactory<ValueList, String>("sku")
+        itemCol.cellValueFactory = PropertyValueFactory("item")
+        quantityCol.cellValueFactory = PropertyValueFactory("quantity")
+        skuCol.cellValueFactory = PropertyValueFactory("sku")
 
         tableDiff.isVisible = false
-        tableDiff.columns.setAll(quantityCol, skuCol)
+        tableDiff.columns.setAll(itemCol, quantityCol, skuCol)
 
     }
 }
