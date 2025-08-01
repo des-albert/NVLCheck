@@ -19,7 +19,19 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.util.prefs.Preferences
 
-data class ValueList(val item: String?, val quantity: String?, val sku: String?)
+data class ValueList(
+    val item: String?,
+    val quantity: String?,
+    val sku: String?
+)
+// Define a class to hold the parsing configuration for a file type
+data class FileParseConfig(
+    val sheetName: String,
+    val firstRow: Int,
+    val itemCol: Int,
+    val qtyCol: Int,
+    val skuCol: Int
+)
 
 class NVLCheck {
 
@@ -70,6 +82,21 @@ class NVLCheck {
     private val prefs: Preferences = Preferences.userNodeForPackage(NVLCheck::class.java)
     private val lastSourceDirKey = "lastSourceDir"
     private val lastTargetDirKey = "lastTargetDir"
+    private val sourceFileConfig = FileParseConfig(
+        sheetName = "BoM",
+        firstRow = 3,
+        itemCol = 5,
+        qtyCol = 6,
+        skuCol = 7
+    )
+    private val targetFileConfig = FileParseConfig(
+        sheetName = "ExpertBOM",
+        firstRow = 6,
+        itemCol = 0,
+        qtyCol = 1,
+        skuCol = 2
+    )
+
 
     @FXML
     fun handleOpenSourceFile() {
@@ -106,14 +133,14 @@ class NVLCheck {
             return
         }
 
-        // IMPROVEMENT: Perform file processing on a background thread using a Task.
+        // Perform file processing on a background thread using a Task.
         val compareTask = object : Task<Pair<Boolean, Set<ValueList>>>() {
             override fun call(): Pair<Boolean, Set<ValueList>> {
                 updateMessage("Reading source file: ${sourceFile.name}...")
-                val configValues = readValuesFromFile(sourceFile, "BoM", 3, 42, 5, 6, 7)
+                val configValues = readValuesFromFile(sourceFile, sourceFileConfig)
 
                 updateMessage("Reading target file: ${targetFile.name}...")
-                val targetValues = readValuesFromFile(targetFile, "ExpertBOM", 6, 43, 0, 1, 2)
+                val targetValues = readValuesFromFile(targetFile, targetFileConfig)
 
                 updateMessage("Comparing values...")
                 val configSet = configValues.toSet()
@@ -132,26 +159,26 @@ class NVLCheck {
         Thread(compareTask).start()
     }
 
-    private fun readValuesFromFile(file: File, sheetName: String, firstRow: Int, lastRow: Int, itemCol: Int, qtyCol: Int, skuCol: Int): List<ValueList> {
+    private fun readValuesFromFile(file: File, config: FileParseConfig): List<ValueList> {
         val values = mutableListOf<ValueList>()
         try {
             FileInputStream(file).use { fis ->
                 XSSFWorkbook(fis).use { workbook ->
                     val evaluator = workbook.creationHelper.createFormulaEvaluator()
 
-                    val sheet = workbook.getSheet(sheetName) ?: run {
-                        logger.error("Sheet '$sheetName' not found in ${file.name}")
-                        throw IOException("Sheet '$sheetName' not found in ${file.name}")
+                    val sheet = workbook.getSheet(config.sheetName) ?: run {
+                        logger.error("Sheet '${config.sheetName}' not found in ${file.name}")
+                        throw IOException("Sheet '${config.sheetName}' not found in ${file.name}")
                     }
 
-                    for (i in firstRow..lastRow) {
+                    for (i in config.firstRow..sheet.lastRowNum) {
                         val row = sheet.getRow(i) ?: continue
 
-                        val itemValue = dataFormatter.formatCellValue(row.getCell(itemCol),evaluator).trim()
-                        if (itemValue.isBlank() || itemValue == "Total") continue
+                        val itemValue = dataFormatter.formatCellValue(row.getCell(config.itemCol),evaluator).trim()
+                        if (itemValue.isBlank() || itemValue.equals("Total", ignoreCase = true)) continue
 
-                        val qtyValue = dataFormatter.formatCellValue(row.getCell(qtyCol), evaluator).trim()
-                        val skuValue = dataFormatter.formatCellValue(row.getCell(skuCol), evaluator).trim()
+                        val qtyValue = dataFormatter.formatCellValue(row.getCell(config.qtyCol), evaluator).trim()
+                        val skuValue = dataFormatter.formatCellValue(row.getCell(config.skuCol), evaluator).trim()
 
                         values.add(ValueList(itemValue, qtyValue, skuValue))
                     }
