@@ -19,8 +19,8 @@
         <Label fx:id="labelSourceFile" layoutX="42.0" layoutY="78.0" prefHeight="20.0" prefWidth="700.0" />
 
         <Label fx:id="labelTargetFile" layoutX="42.0" layoutY="118.0" prefHeight="20.0" prefWidth="700.0" />
-        <Label fx:id="labelResult" layoutX="169.0" layoutY="292.0" prefHeight="17.0" prefWidth="352.0" />
-        <TableView fx:id="tableDiff" layoutX="34.0" layoutY="214.0" prefHeight="330.0" prefWidth="732.0">
+        <Label fx:id="labelResult" layoutX="42.0" layoutY="163.0" prefHeight="17.0" prefWidth="352.0" textFill="#bc2820" />
+        <TableView fx:id="tableDiff" layoutX="42.0" layoutY="218.0" prefHeight="331.0" prefWidth="700.0">
             <columns>
                 <TableColumn fx:id="itemCol" prefWidth="116.0" text="Item" />
                 <TableColumn fx:id="quantityCol" prefWidth="94.0" text="Quantity" />
