@@ -9,6 +9,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.control.cell.PropertyValueFactory
+import javafx.scene.text.Font
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import javafx.stage.FileChooser
@@ -22,7 +23,8 @@ import java.util.prefs.Preferences
 data class ValueList(
     val item: String?,
     val quantity: String?,
-    val sku: String?
+    val sku: String?,
+    val solID: String?
 )
 // Define a class to hold the parsing configuration for a file type
 data class FileParseConfig(
@@ -30,11 +32,14 @@ data class FileParseConfig(
     val firstRow: Int,
     val itemCol: Int,
     val qtyCol: Int,
-    val skuCol: Int
+    val skuCol: Int,
+    val solIDCol: Int
 )
 
 class NVLCheck {
 
+    @FXML
+    lateinit var solIDCol: TableColumn<ValueList, String>
     @FXML
     lateinit var skuCol: TableColumn<ValueList, String>
 
@@ -87,14 +92,16 @@ class NVLCheck {
         firstRow = 3,
         itemCol = 5,
         qtyCol = 6,
-        skuCol = 7
+        skuCol = 7,
+        solIDCol = 9
     )
     private val targetFileConfig = FileParseConfig(
         sheetName = "ExpertBOM",
         firstRow = 6,
         itemCol = 0,
         qtyCol = 1,
-        skuCol = 2
+        skuCol = 2,
+        solIDCol = 5
     )
 
 
@@ -179,8 +186,9 @@ class NVLCheck {
 
                         val qtyValue = dataFormatter.formatCellValue(row.getCell(config.qtyCol), evaluator).trim()
                         val skuValue = dataFormatter.formatCellValue(row.getCell(config.skuCol), evaluator).trim()
+                        val solIDValue = dataFormatter.formatCellValue(row.getCell(config.solIDCol), evaluator).trim()
 
-                        values.add(ValueList(itemValue, qtyValue, skuValue))
+                        values.add(ValueList(itemValue, qtyValue, skuValue, solIDValue))
                     }
                 }
             }
@@ -204,9 +212,13 @@ class NVLCheck {
             val (allMatch, differences) = task.value
             if (allMatch) {
                 labelResult.text = "Success: All items match."
+                labelResult.font = Font.font(24.0)
+                labelResult.textFill = javafx.scene.paint.Color.GREEN
                 tableDiff.isVisible = false
             } else {
                 labelResult.text = "Mismatch found. See differences below."
+                labelResult.font = Font.font(24.0)
+                labelResult.textFill = javafx.scene.paint.Color.RED
                 tableDiff.items = FXCollections.observableArrayList(differences)
                 tableDiff.isVisible = true
             }
@@ -241,6 +253,7 @@ class NVLCheck {
         itemCol.cellValueFactory = PropertyValueFactory("item")
         quantityCol.cellValueFactory = PropertyValueFactory("quantity")
         skuCol.cellValueFactory = PropertyValueFactory("sku")
+        solIDCol.cellValueFactory = PropertyValueFactory("solID")
 
         tableDiff.isVisible = false
     }
