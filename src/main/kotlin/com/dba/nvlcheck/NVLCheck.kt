@@ -6,8 +6,10 @@ import javafx.concurrent.Task
 import javafx.fxml.FXML
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.control.RadioButton
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
+import javafx.scene.control.ToggleGroup
 import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.text.Font
 import org.slf4j.Logger
@@ -26,6 +28,7 @@ data class ValueList(
     val sku: String?,
     val solID: String?
 )
+
 // Define a class to hold the parsing configuration for a file type
 data class FileParseConfig(
     val sheetName: String,
@@ -39,7 +42,21 @@ data class FileParseConfig(
 class NVLCheck {
 
     @FXML
+    lateinit var radio72GB200: RadioButton
+
+    @FXML
+    lateinit var radio4GB200: RadioButton
+
+    @FXML
+    lateinit var radio72GB300: RadioButton
+
+    @FXML
+    lateinit var confGroup: ToggleGroup
+
+
+    @FXML
     lateinit var solIDCol: TableColumn<ValueList, String>
+
     @FXML
     lateinit var skuCol: TableColumn<ValueList, String>
 
@@ -70,8 +87,6 @@ class NVLCheck {
     @FXML
     lateinit var labelSourceFile: Label
 
-    @FXML
-    lateinit var buttonSource: Button
 
     @FXML
     lateinit var labelJavaFX: Label
@@ -79,8 +94,13 @@ class NVLCheck {
     @FXML
     lateinit var labelJDK: Label
 
+    private val NVL72_GB300 = "NVL72 GB300 Configurator v11.0.xlsx"
+    private val NVL72_GB200 = "NVL72 GB200 Configurator v4.0.xlsx"
+    private val NVL4_GB200 = "NVL4 GB200 Configurator v5.0.xlsx"
 
-    private lateinit var sourceFile: File
+    private val configRootPath = "C:\\Users\\albertd\\OneDrive - Hewlett Packard Enterprise\\HPE\\NVL72\\"
+    private var sourcePath = configRootPath + NVL72_GB300
+    private  var sourceFile = File(sourcePath)
     private lateinit var targetFile: File
     private val logger: Logger = LoggerFactory.getLogger("Excel Reader")
     private val dataFormatter = DataFormatter()
@@ -104,16 +124,31 @@ class NVLCheck {
         solIDCol = 5
     )
 
-
     @FXML
-    fun handleOpenSourceFile() {
-        val initialDir = prefs.get(lastSourceDirKey, System.getProperty("user.home"))
-        openFileChooser(initialDir)?.let { file ->
-            sourceFile = file
-            labelSourceFile.text = file.name
-            prefs.put(lastSourceDirKey, file.parent) // Save the new directory
+    fun sourceSelect() {
+        var selectedSource = ""
+        val selectedToggle = confGroup.selectedToggle
+        if (selectedToggle != null) {
+            val selectedRadio = selectedToggle as RadioButton
+            selectedSource = selectedRadio.text
         }
+
+        when (selectedSource) {
+            "NVL72 GB300" -> {
+                sourcePath = configRootPath + NVL72_GB300
+            }
+            "NVL72 GB200" -> {
+                sourcePath = configRootPath + NVL72_GB200
+            }
+            "NVL4 GB200" -> {
+                sourcePath = configRootPath + NVL4_GB200
+            }
+        }
+        sourceFile = File(sourcePath)
     }
+
+
+
     @FXML
     fun handleOpenTargetFile() {
         val initialDir = prefs.get(lastTargetDirKey, System.getProperty("user.home"))
@@ -135,12 +170,13 @@ class NVLCheck {
 
     @FXML
     fun handleCompare() {
-        if (!::sourceFile.isInitialized || !::targetFile.isInitialized) {
-            labelResult.text = "Please select both source and target files."
+        if ( !::targetFile.isInitialized) {
+            labelResult.text = "Please select target file."
             return
         }
 
         // Perform file processing on a background thread using a Task.
+
         val compareTask = object : Task<Pair<Boolean, Set<ValueList>>>() {
             override fun call(): Pair<Boolean, Set<ValueList>> {
                 updateMessage("Reading source file: ${sourceFile.name}...")
@@ -161,6 +197,7 @@ class NVLCheck {
         }
 
         // Bind UI elements to the task's state for real-time feedback.
+
         bindUIToTask(compareTask)
 
         Thread(compareTask).start()
@@ -181,7 +218,7 @@ class NVLCheck {
                     for (i in config.firstRow..sheet.lastRowNum) {
                         val row = sheet.getRow(i) ?: continue
 
-                        val itemValue = dataFormatter.formatCellValue(row.getCell(config.itemCol),evaluator).trim()
+                        val itemValue = dataFormatter.formatCellValue(row.getCell(config.itemCol), evaluator).trim()
                         if (itemValue.isBlank() || itemValue.equals("Total", ignoreCase = true)) continue
 
                         val qtyValue = dataFormatter.formatCellValue(row.getCell(config.qtyCol), evaluator).trim()
@@ -204,7 +241,6 @@ class NVLCheck {
 
         labelResult.textProperty().bind(task.messageProperty())
         buttonCompare.disableProperty().bind(task.runningProperty())
-        buttonSource.disableProperty().bind(task.runningProperty())
         buttonTarget.disableProperty().bind(task.runningProperty())
 
         task.setOnSucceeded {
@@ -235,7 +271,6 @@ class NVLCheck {
     private fun unbindUIFromTask() {
         labelResult.textProperty().unbind()
         buttonCompare.disableProperty().unbind()
-        buttonSource.disableProperty().unbind()
         buttonTarget.disableProperty().unbind()
     }
 
