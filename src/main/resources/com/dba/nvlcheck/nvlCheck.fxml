@@ -21,8 +21,11 @@
 
         <Label fx:id="labelSourceFile" layoutX="42.0" layoutY="78.0" prefHeight="20.0" prefWidth="700.0" />
 
-        <Label fx:id="labelTargetFile" layoutX="42.0" layoutY="118.0" prefHeight="20.0" prefWidth="700.0" />
-        <Label fx:id="labelResult" layoutX="42.0" layoutY="163.0" prefHeight="17.0" prefWidth="500.0" textFill="#bc2820">
+        <Label fx:id="labelTargetFile" layoutX="42.0" layoutY="143.0" prefHeight="20.0" prefWidth="700.0">
+         <font>
+            <Font size="14.0" />
+         </font></Label>
+        <Label fx:id="labelResult" layoutX="42.0" layoutY="176.0" prefHeight="20.0" prefWidth="692.0" textFill="#bc2820">
          <font>
             <Font size="14.0" />
          </font></Label>
