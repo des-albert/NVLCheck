@@ -1,0 +1,12 @@
+.root {
+    -fx-background-color: rgba(174, 154, 119, 0.68);
+}
+
+.button{
+    -fx-text-fill: Yellow;
+    -fx-font-family: 'Ink Free';
+    -fx-font-size: 14;
+    -fx-text-alignment: "center";
+    -fx-background-color: "MediumSeaGreen"
+}
+
